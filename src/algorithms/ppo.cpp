@@ -45,7 +45,8 @@ std::vector<UpdateDatum> PPO::update(RolloutStorage &rollouts, float decay_level
 {
     // Decay lr and clip parameter
     float clip_param = original_clip_param * decay_level;
-    optimizer->options.learning_rate(original_learning_rate * decay_level);
+    auto new_options = torch::optim::AdamOptions(original_learning_rate * decay_level);
+    optimizer = std::make_unique<torch::optim::Adam>(policy->parameters(), new_options);
 
     // Calculate advantages
     auto returns = rollouts.get_returns();

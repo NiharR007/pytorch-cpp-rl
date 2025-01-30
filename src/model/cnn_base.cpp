@@ -3,6 +3,7 @@
 #include "cpprl/model/cnn_base.h"
 #include "cpprl/model/model_utils.h"
 #include "third_party/doctest.h"
+#include "cpprl/doctest_disable.h"
 
 namespace cpprl
 {

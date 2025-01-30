@@ -6,7 +6,7 @@ import logging
 
 from gym_server.server import Server
 from gym_server.zmq_client import ZmqClient
-
+import pdp
 
 def main():
     """
@@ -32,9 +32,16 @@ def main():
 
     try:
         server.serve()
-    except:  # pylint: disable=bare-except
-        import pdb
-        pdb.post_mortem()
+    except Exception as e:
+        # Option A: Just log and re-raise:
+        import traceback
+        logging.error("An exception occurred:\n%s", traceback.format_exc())
+        raise
+
+        # Option B: Or log and exit gracefully:
+        logging.error("Error in server.serve(): %s", e)
+        exit(1)
+
 
 
 if __name__ == '__main__':

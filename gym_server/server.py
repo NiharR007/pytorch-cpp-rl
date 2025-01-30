@@ -4,7 +4,7 @@ Contains a class that trains an agent.
 import logging
 from typing import Tuple
 import numpy as np
-import gym
+import gymnasium as gym
 
 from gym_server.envs import make_vec_envs
 from gym_server.messages import (InfoMessage, MakeMessage, ResetMessage,
@@ -37,53 +37,44 @@ class Server:
             pass
 
     def _serve(self):
+        """
+        Serves forever.
+        """
         while True:
-            request = self.zmq_client.receive()
-            method = request['method']
-            param = request['param']
+            message = self.zmq_client.receive()
+            if message["method"] == "make":
+                self.make(**message["param"])
+                self.zmq_client.send("OK")
+            elif message["method"] == "info":
+                info_dict = self.info()  # Get the info dictionary
+                self.zmq_client.send(info_dict)  # Send the entire dictionary
+            elif message["method"] == "reset":
+                obs = self.reset()
+                self.zmq_client.send(obs)
+            elif message["method"] == "step":
+                obs = self.step(**message["param"])
+                self.zmq_client.send(obs)
+            elif message["method"] == "close":
+                self.close()
+                self.zmq_client.send("OK")
+                break
 
-            if method == 'info':
-                (action_space_type,
-                 action_space_shape,
-                 observation_space_type,
-                 observation_space_shape) = self.__info()
-                self.zmq_client.send(InfoMessage(action_space_type,
-                                                 action_space_shape,
-                                                 observation_space_type,
-                                                 observation_space_shape))
+    def info(self) -> dict:
+        """Returns information about the environment's spaces."""
+        action_space = self.env.action_space
+        observation_space = self.env.observation_space
+        
+        return {
+            "action_space_type": type(action_space).__name__,
+            "action_space_shape": [int(action_space.n)],  # Convert to simple integer
+            "observation_space_type": "Box",
+            "observation_space_shape": [int(dim) for dim in observation_space.shape],  # Convert to simple integers
+            "observation_space_bounds": {
+                "low": observation_space.low.tolist(),  # Convert numpy arrays to lists
+                "high": observation_space.high.tolist()
+            }
+        }
 
-            elif method == 'make':
-                self.__make(param['env_name'], param['num_envs'])
-                self.zmq_client.send(MakeMessage())
-
-            elif method == 'reset':
-                observation = self.__reset()
-                self.zmq_client.send(ResetMessage(observation))
-
-            elif method == 'step':
-                if 'render' in param:
-                    result = self.__step(
-                        np.array(param['actions']), param['render'])
-                else:
-                    result = self.__step(np.array(param['actions']))
-                self.zmq_client.send(StepMessage(result[0],
-                                                 result[1],
-                                                 result[2],
-                                                 result[3]['reward']))
-
-    def info(self):
-        """
-        Return info about the currently loaded environment
-        """
-        action_space_type = self.env.action_space.__class__.__name__
-        if action_space_type == 'Discrete':
-            action_space_shape = [self.env.action_space.n]
-        else:
-            action_space_shape = self.env.action_space.shape
-        observation_space_type = self.env.observation_space.__class__.__name__
-        observation_space_shape = self.env.observation_space.shape
-        return (action_space_type, action_space_shape, observation_space_type,
-                observation_space_shape)
 
     def make(self, env_name, num_envs):
         """
@@ -91,30 +82,63 @@ class Server:
         """
         logging.info("Making %d %ss", num_envs, env_name)
         self.env = make_vec_envs(env_name, 0, num_envs)
+        print("Action space:", self.env.action_space)
+        print("Observation space:", self.env.observation_space)
 
-    def reset(self) -> np.ndarray:
-        """
-        Resets the environments.
-        """
+    def reset(self) -> dict:
         logging.info("Resetting environments")
-        return self.env.reset()
+        try:
+            result = self.env.reset()
+            if isinstance(result, tuple):
+                obs, info = result
+            else:
+                obs = result
+                info = {}
+            
+            if isinstance(obs, np.ndarray):
+                if len(obs.shape) == 2:
+                    obs = obs.reshape(-1).tolist()
+                else:
+                    obs = obs.tolist()
+            
+            print("Debug - Observation:", obs)
+            print("Debug - Info:", info)
+            
+            return {"observation": obs, "info": info}
+            
+        except Exception as e:
+            logging.error(f"Reset error: {e}")
+            raise
 
-    def step(self,
-             actions: np.ndarray,
-             render: bool = False) -> Tuple[np.ndarray, np.ndarray,
-                                            np.ndarray, np.ndarray]:
+
+    def step(self, actions, render=False):
         """
-        Steps the environments.
+        Steps the environments with the given actions.
         """
-        if isinstance(self.env.action_space, gym.spaces.Discrete):
-            actions = actions.squeeze(-1)
-            actions = actions.astype(np.int)
-        observation, reward, done, info = self.env.step(actions)
-        reward = np.expand_dims(reward, -1)
-        done = np.expand_dims(done, -1)
-        if render:
-            self.env.render()
-        return observation, reward, done, info
+        # Convert actions to integers
+        if isinstance(actions, list):
+            actions = [int(a[0]) for a in actions]
+        
+        logging.info(f"Stepping environments with actions: {actions}")
+        
+        # Get step results
+        obs, rewards, dones, infos = self.env.step(actions)
+        
+        # Ensure everything is a flat list
+        obs_flat = obs.reshape(-1).tolist()  # Flatten observation
+        rewards_flat = rewards.tolist()       # Keep rewards as is
+        dones_flat = [bool(d) for d in dones] # Convert to simple boolean list
+        
+        logging.debug(f"Sending obs shape: {len(obs_flat)}")
+        logging.debug(f"Sending rewards shape: {len(rewards_flat)}")
+        
+        return {
+            "observation": obs_flat,          # Send as flat list
+            "reward": rewards_flat,           # Single list of rewards
+            "done": dones_flat,              # Single list of booleans
+            "info": {"reward": rewards_flat}  # Keep info simple
+        }
+   
 
     __info = info
     __make = make

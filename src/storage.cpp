@@ -1,3 +1,8 @@
+#include "cpprl/doctest_disable.h"
+#define DOCTEST_CONFIG_NO_DEBUGGER
+#define DOCTEST_CONFIG_DISABLE
+#include "third_party/doctest.h"
+
 #include <memory>
 #include <vector>
 
@@ -8,7 +13,6 @@
 #include "cpprl/generators/recurrent_generator.h"
 #include "cpprl/storage.h"
 #include "cpprl/spaces.h"
-#include "third_party/doctest.h"
 
 namespace cpprl
 {

@@ -1,3 +1,4 @@
+#include "cpprl/doctest_disable.h"
 #include <torch/torch.h>
 
 #include "cpprl/running_mean_std.h"

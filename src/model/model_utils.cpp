@@ -11,7 +11,7 @@ torch::Tensor orthogonal_(Tensor tensor, double gain)
 {
     NoGradGuard guard;
 
-    AT_CHECK(
+    TORCH_CHECK(
         tensor.ndimension() >= 2,
         "Only tensors with 2 or more dimensions are supported");
 

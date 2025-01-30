@@ -66,7 +66,7 @@ struct CnnResetResponse
 
 struct MlpResetResponse
 {
-    std::vector<std::vector<float>> observation;
+    std::vector<float> observation;
     MSGPACK_DEFINE_MAP(observation);
 };
 
@@ -83,9 +83,12 @@ struct CnnStepResponse : StepResponse
     MSGPACK_DEFINE_MAP(observation, reward, done, real_reward);
 };
 
-struct MlpStepResponse : StepResponse
-{
-    std::vector<std::vector<float>> observation;
-    MSGPACK_DEFINE_MAP(observation, reward, done, real_reward);
+struct MlpStepResponse {
+    std::vector<float> observation;       
+    std::vector<float> reward;           
+    std::vector<bool> done;              
+    std::map<std::string, std::vector<float>> info;
+
+    MSGPACK_DEFINE_MAP(observation, reward, done, info); // Key fix
 };
 }

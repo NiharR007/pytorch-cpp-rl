@@ -2,6 +2,7 @@
 
 #include "cpprl/observation_normalizer.h"
 #include "cpprl/running_mean_std.h"
+#include "cpprl/doctest_disable.h"
 #include "third_party/doctest.h"
 
 namespace cpprl

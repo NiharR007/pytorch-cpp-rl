@@ -11,3 +11,5 @@ if (CPPRL_BUILD_TESTS)
         ${CMAKE_CURRENT_LIST_DIR}/ppo.cpp
     )
 endif (CPPRL_BUILD_TESTS)
+
+include_directories(${PROJECT_SOURCE_DIR}/include)

@@ -1,3 +1,5 @@
+#include "cpprl/doctest_disable.h"
+#include "third_party/doctest.h"
 #include <chrono>
 #include <memory>
 
@@ -9,7 +11,6 @@
 #include "cpprl/model/policy.h"
 #include "cpprl/storage.h"
 #include "cpprl/spaces.h"
-#include "third_party/doctest.h"
 
 namespace cpprl
 {
@@ -36,7 +37,8 @@ A2C::A2C(Policy &policy,
 std::vector<UpdateDatum> A2C::update(RolloutStorage &rollouts, float decay_level)
 {
     // Decay learning rate
-    optimizer->options.learning_rate(original_learning_rate * decay_level);
+    auto new_options = torch::optim::RMSpropOptions(original_learning_rate * decay_level);
+    optimizer = std::make_unique<torch::optim::RMSprop>(policy->parameters(), new_options);
 
     // Prep work
     auto full_obs_shape = rollouts.get_observations().sizes();

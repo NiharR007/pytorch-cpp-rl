@@ -26,6 +26,10 @@ class NNBase : public nn::Module
     std::vector<torch::Tensor> forward_gru(torch::Tensor x,
                                            torch::Tensor hxs,
                                            torch::Tensor masks);
+    std::vector<torch::Tensor> forward_gru_sequence(
+        torch::Tensor x,
+        torch::Tensor hxs,
+        torch::Tensor masks);
     unsigned int get_hidden_size() const;
 
     inline int get_output_size() const { return hidden_size; }
