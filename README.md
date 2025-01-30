@@ -37,7 +37,8 @@ Terminal 2:
 build/example/gym_server
 ```
 
-It takes about 60 seconds to train an agent to 200 average reward on my laptop (i7-8550U processor).
+Currently as I'm working on mac with very limited compatibility MyMac(Macbook Air M1) it runs enough but sometimes crashes and stops the training.
+So will be working to optimise it.
 
 The environment and hyperparameters can be set in `example/gym_client.cpp`.
 
