@@ -48,12 +48,15 @@ CMake is used for the build system.
 Most dependencies are included as submodules (run `git submodule update --init --recursive` to get them).
 Libtorch has to be [installed seperately](https://pytorch.org/cppdocs/installing.html).
 
-### Linux
-```bash
+### Mac
+```zsh
 cd pytorch-cpp-rl
 mkdir build && cd build
-cmake ..
-make -j4
+cmake -G Ninja \
+      -DCMAKE_PREFIX_PATH=path/to/libtorch \
+      -DCPPRL_BUILD_TESTS=OFF \
+      ..
+ninja
 ```
 
 ### Windows
